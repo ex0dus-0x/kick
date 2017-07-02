@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+require "rubygems"
+require "bundler/setup"
+require 'optparse'
+require 'ostruct'
+
+require 'packetfu'
+
+options = OpenStruct.new
+
+
+header = """ 
+
+ _             _             
+| |__ _  _ ___| |__ _  _ ___ 
+| '_ | || / -_) '_ | || / -_)
+|_.__/\\_, \\___|_.__/\\_, \\__|
+      |__/          |__/       
+     Written by: @ex0dus-0x   \n\n"""
+     
+puts header
+
+OptionParser.new do |opt|
+  opt.on('-s SERVICE') { |o| options.service = o }
+  opt.on('-i IFACE') { |o| options.iface = o}
+end.parse!
+
+if options.service == "web"
+  require_relative "src/web"
+end
+
+iface = options.iface || PacketFu::Utils.default_int
+config = PacketFu::Utils.ifconfig(iface)
