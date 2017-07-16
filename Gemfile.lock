@@ -1,26 +1,23 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    mustermann (1.0.0)
+    colorize (0.8.1)
+    ipscanner (0.3.0)
+    macaddr (1.7.1)
+      systemu (~> 2.6.2)
     packetfu (1.1.13)
       pcaprub
     pcaprub (0.12.4)
-    rack (2.0.3)
-    rack-protection (2.0.0)
-      rack
-    sinatra (2.0.0)
-      mustermann (~> 1.0)
-      rack (~> 2.0)
-      rack-protection (= 2.0.0)
-      tilt (~> 2.0)
-    tilt (2.0.7)
+    systemu (2.6.5)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  colorize
+  ipscanner
+  macaddr
   packetfu
-  sinatra
 
 BUNDLED WITH
    1.15.1

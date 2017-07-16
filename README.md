@@ -1,12 +1,36 @@
 # byebye
-Deauthenticate users off of your local area network. CLI and web-app supported!
+Deauthenticate users off of your local area network.
 
 ---
 
-Whilst I will be AFK for quite a while, this doesn't mean that I won't be 
-brainstorming on how I will work about on this project. Currently, here are my
-ideas:
+## How to use
 
-* Python + Flask
-* Ruby + Sinatra (no Rails, sticking with lightweight)
-* Rust + Iron
+Quite simple actually.
+
+    Usage: ./byebye [options]
+      -i, --interface IFACE            Input network interface, otherwise defaults
+      -a, --address ADDRESS            Input target address, otherwise prints host table
+      -h, --help                       Show this message
+
+If you do not provide an interface through `--interface`, the default is `wlan0`. If you do not provide a target IP address, a host table will be displayed for your convenience and will ask for your selection.
+
+# Installation
+
+Make sure you have Ruby, `gem` and `bundler` all on your system.
+
+    git clone https://github.com/ex0dus-0x/byebye
+    cd /path/to/byebye
+    bundle install
+    ./byebye
+
+
+### Example
+
+    ./byebye -i wlan1 -a 192.168.1.5
+
+### TODO:
+
+* Write Sinatra web version support
+* Reload terminal-table with "r" option
+* Verbosity
+    
