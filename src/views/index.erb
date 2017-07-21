@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./style.css">
+    <title><%= @head %></title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1><%= @head %></h1>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <p>Welcome to the <b>byebye</b> web service! Your table of hosts and their respective
+        IP addresses are below. </p>
+        <p>
+          Visit this project's <a href="https://github.com/ex0dus-0x/byebye">
+          Github repository</a> for more information. You can also star, 
+          report bugs, and submit pull requests!
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left">hostname</th>
+              <th style="text-align: left">ip address</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% IPScanner.scan.each do |i|  %>
+              <tr>
+                <td style="text-align: left"><%= Socket.getaddrinfo(i, nil)[1][2] %></td>
+                <td style="text-align: left"> <%= Socket.getaddrinfo(i, nil)[1][3] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <hr />
+        
+        <form method="POST" action="/">
+          <p> Enter IP Address to Deauthenticate: </p>
+          <input type="text" name="ip"/>
+          <input type="submit">
+        </form>
+        <br />
+        
+        <% if @deauth_text %>
+          <p><%= @deauth_text %>... Click <a href="/">here</a> to stop.</p>
+        <% end %>
+        
+      </section>
+    </div>
+  </body>
+</html>

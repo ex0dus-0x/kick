@@ -6,3 +6,6 @@ gem "macaddr"
 gem "packetfu"
 gem "ipscanner"
 gem "colorize"
+
+gem "sinatra"
+gem "sinatra-reloader"
