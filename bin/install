@@ -5,8 +5,6 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-sudo apt update
-sudo apt install ruby rbenv git
 git clone https://github.com/ex0dus-0x/byebye
 cd byebye
 gem install bundler

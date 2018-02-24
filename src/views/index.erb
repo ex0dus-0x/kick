@@ -22,7 +22,7 @@
         IP addresses are below. </p>
         <p>
           Visit this project's <a href="https://github.com/ex0dus-0x/byebye">
-          Github repository</a> for more information. You can also star, 
+          Github repository</a> for more information. You can also star,
           report bugs, and submit pull requests!
         </p>
         <table>
@@ -42,18 +42,18 @@
           </tbody>
         </table>
         <hr />
-        
+
         <form method="POST" action="/">
           <p> Enter IP Address to Deauthenticate: </p>
           <input type="text" name="ip"/>
           <input type="submit">
         </form>
         <br />
-        
+
         <% if @deauth_text %>
-          <p><%= @deauth_text %>... Click <a href="/">here</a> to stop.</p>
+          <p><%= @deauth_text %>... Click <a href="/stop">here</a> to stop.</p>
         <% end %>
-        
+
       </section>
     </div>
   </body>
