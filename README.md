@@ -7,7 +7,7 @@ __byebye__ is a penetration testing tool that enables an attacker to deauthentic
 
 ## How to use
     
-    ./byebye -h
+    ruby byebye.rb -h
     Usage: ./byebye [options]
         -i, --interface IFACE            Input network interface, otherwise defaults
         -a, --address ADDRESS            Input target address, otherwise prints host table

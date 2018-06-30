@@ -14,7 +14,7 @@ GEM
     rack (2.0.4)
     rack-protection (2.0.1)
       rack
-    sinatra (2.0.1)
+    sinatra (~> 2.0.2)
       mustermann (~> 1.0)
       rack (~> 2.0)
       rack-protection (= 2.0.1)
