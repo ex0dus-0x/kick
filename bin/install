@@ -1,9 +1,0 @@
-#!/bin/bash
-
-git clone https://github.com/ex0dus-0x/kick.git
-cd kick
-gem install bundler
-bundle install
-
-echo "Done!"
-./kick

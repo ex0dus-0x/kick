@@ -19,12 +19,13 @@ options = OpenStruct.new
 
 # Header graphics
 header = """
+  _    _      _
+ | |  (_)    | |
+ | | ___  ___| | __
+ | |/ / |/ __| |/ /
+ |   <| | (__|   <
+ |_|\/_\/_|\/___|_|\/_\/
 
- _             _
-| |__ _  _ ___| |__ _  _ ___
-| '_ | || / -_) '_ | || / -_)
-|_.__/\\_, \\___|_.__/\\_, \\__|
-      |__/          |__/
      Written by: @ex0dus-0x   \n\n"""
 
 puts header.colorize(:green)
@@ -32,7 +33,7 @@ puts header.colorize(:green)
 
 # Instantiate Parser, grab service and iface
 OptionParser.new do |opt|
-    opt.banner = "Usage: ./byebye [options]"
+    opt.banner = "Usage: ./kick [options]"
 
     opt.on('-i IFACE', "--interface IFACE", "Input network interface, otherwise defaults") { |o| options.iface = o}
     opt.on('-a ADDRESS', "--address ADDRESS", "Input target address, otherwise prints host table"){ |o| options.address = o}
@@ -66,8 +67,8 @@ gateway_mac = PacketFu::Utils.arp(gateway_ip, :iface => iface)
 config = PacketFu::Utils.ifconfig(iface)
 
 if (options.mode == "web")
-    ByeApp.set :iface => iface, :mac => mac, :gateway_ip => gateway_ip, :gateway_mac => gateway_mac
-    ByeApp.run!
+    KickApp.set :iface => iface, :mac => mac, :gateway_ip => gateway_ip, :gateway_mac => gateway_mac
+    KickApp.run!
     exit
 elsif (options.mode == "cli")
     # Continue execution

@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+#   kick installer
+#
+#       Does a fast local install, should be invoked through
+#       curl/wget as a one-line install command.
+
+# clone repository
+git clone https://github.com/ex0dus-0x/kick.git && cd kick/
+
+# install bundler and set env
+gem install bundler
+bundle config set path vendor/bundle
+bundle install
+
+# success!
+echo "Done!"
+ruby kick.rb --help

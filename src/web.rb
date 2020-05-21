@@ -1,4 +1,7 @@
-#!/usr/bin/env ruby
+# web.rb
+#
+#   Execute the kick sinatra-based web service!
+
 require 'rubygems' if RUBY_VERSION < "1.9"
 
 require 'sinatra/base'
@@ -7,20 +10,15 @@ require 'erb'
 
 require_relative 'poison.rb'
 
-##############################################
-# web.rb
-#   Execute byebye web service!
-##############################################
-
 $child_pid = nil
 $address = nil
 
-class ByeApp < Sinatra::Base
+class KickApp < Sinatra::Base
 
   # Configure and register reloader to reload on changes
   configure :development do
     set :logging, false
-    set :public_folder, File.dirname(__FILE__) + '/views'
+    set :public_folder, File.dirname(__FILE__) + '../views'
     register Sinatra::Reloader
   end
 
@@ -34,7 +32,7 @@ class ByeApp < Sinatra::Base
   # Default / path
   get '/' do
     Socket.do_not_reverse_lookup = false
-    @head = "Welcome to byebye, #{Socket.gethostname}!"
+    @head = "Welcome to kick, #{Socket.gethostname}!"
     erb :index
   end
 
@@ -43,7 +41,7 @@ class ByeApp < Sinatra::Base
 
     $child_pid = Process.fork do
       while true
-        
+
         Signal.trap("SIGHUP") {
           puts "Killing deauthentication child process!"
           Process.exit
